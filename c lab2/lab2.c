@@ -4,15 +4,22 @@
 #include <string.h>
 #define MAX_LEN 1024 
 
-char** readMas(int count)
+
+int inp_str(char *string, int maxlen){
+    char buffer[MAX_LEN];
+    scanf("%[^\n]", buffer);
+    getchar();
+    strncpy(string, buffer, maxlen); 
+    size_t len = strlen(buffer);
+    return (int)len;
+}
+
+
+char** readMas(int count, char **mas, int maxlen)
 {
-	char buffer[MAX_LEN];
-	char **mas; 
-	mas = (char **)malloc(sizeof(char *)*count);
     for (int i = 0; i < count ; i++){
-        scanf("%s", buffer); 
-        mas[i] = (char *)malloc(sizeof(char)*strlen(buffer)); 
-        strcpy(mas[i], buffer); 
+        mas[i] = (char *)malloc(sizeof(char)*maxlen); 
+        inp_str(mas[i], maxlen);
     }
     return mas; 
 }
@@ -71,7 +78,9 @@ int main(int argc, char **argv){
 	int count;
 	int changes;
 	scanf("%d", &count);
-	mas = readMas(count);
+	getchar();
+	mas = (char **)malloc(sizeof(char *)*count);
+    mas = readMas(count, mas, MAX_LEN);
 	changes = bubbleSort(mas, count);
 	printf("Кол-во перестановок: %d\n",changes);
 	printMas(mas, count);
