@@ -47,7 +47,8 @@ void printMas(char **mas, int count)
 
 void freeMas(char **mas, int count)
 {
-	for (int i = 0; i < count; i++){
+	for (int i = 0; i < count; i++)
+	{
         free(mas[i]); 
     }
     free(mas);
@@ -80,7 +81,7 @@ int main(int argc, char **argv){
 	scanf("%d", &count);
 	getchar();
 	mas = (char **)malloc(sizeof(char *)*count);
-    mas = readMas(count, mas, MAX_LEN);
+	mas = readMas(count, mas, MAX_LEN);
 	changes = bubbleSort(mas, count);
 	printf("Кол-во перестановок: %d\n",changes);
 	printMas(mas, count);
