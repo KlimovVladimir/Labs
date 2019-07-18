@@ -9,13 +9,13 @@ void inp_str(char *string, int maxlen, FILE *fp)
 {
     char buffer[MAX_LEN];
     fscanf(fp,"%s", buffer);
-    strncpy(string, buffer, maxlen); 
+    strncpy(string, buffer, maxlen);
 }
 
 char** readMas(FILE *fp, char **mas, int count, int maxlen)
 {
-    for (int i = 0; i < count ; i++){
-        mas[i] = (char *)malloc(sizeof(char)*maxlen); 
+    for (int i = 0; i < count ; i++) {
+        mas[i] = (char *)malloc(sizeof(char)*maxlen);
         inp_str(mas[i], maxlen, fp);
     }
     return mas;
@@ -30,7 +30,7 @@ void printMas(char **mas, int count)
 
 void freeMas(char **mas, int count)
 {
-    for (int i = 0; i < count; i++) 
+    for (int i = 0; i < count; i++)
     {
         free(mas[i]);
     }
@@ -39,25 +39,25 @@ void freeMas(char **mas, int count)
 
 void delstrings(char **mas, int count, char sym, char* name )
 {
-	FILE *op;
-	int ii=0;
-	for(int i=0;i<strlen(name);i++)
-	{
-		if(name[i]=='.')
-		{
-			ii=i;			
-		}
-	}
-	if(ii==0)
-	{
-		name[ii+1]='.';
-		name[ii+2]='r';
-	}
-	else
-	{
-		name[ii+1]='r';
-	}
-	op=fopen(name, "w");
+    FILE *op;
+    int ii=0;
+    for(int i=0; i<strlen(name); i++)
+    {
+        if(name[i]=='.')
+        {
+            ii=i;
+        }
+    }
+    if(ii==0)
+    {
+        name[ii+1]='.';
+        name[ii+2]='r';
+    }
+    else
+    {
+        name[ii+1]='r';
+    }
+    op=fopen(name, "w");
     int flag=0;
     for (int i=0; i<count; i++)
     {
@@ -70,12 +70,12 @@ void delstrings(char **mas, int count, char sym, char* name )
         }
         if(flag==0)
         {
-			printf("%s\n",mas[i]);
-			fprintf(op, "%s\n",mas[i]);
-		}
-		flag=0;
+            printf("%s\n",mas[i]);
+            fprintf(op, "%s\n",mas[i]);
+        }
+        flag=0;
     }
-	fclose(op);
+    fclose(op);
 }
 
 int main(int argc, char **argv)
