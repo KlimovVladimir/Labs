@@ -23,7 +23,6 @@ float **readMas(FILE * fp, float **mas, int *mascol, int count, int maxlen)
 		fgets(buffer, 1024, fp);
 		token = strtok(buffer, " ,\t\n");
 		while (token != NULL) {
-			//mas[i][j] = atoi(token);
 			mas[i][j] = strtol(token, NULL, 10);
 			j++;
 			token = strtok(NULL, " ,\t\n");
