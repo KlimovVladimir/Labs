@@ -23,15 +23,18 @@ void *func(void *arg)
 {
 	int *ps = (int *)malloc(sizeof (int));
 	FILE *op = (FILE *) arg;
-	char *istr;
+	int flg;
 	char buffer[MAX_LEN];
 	pthread_mutex_lock(&shared.mutex);
 	fgets(buffer, MAX_LEN, op);
-	istr = strstr(buffer, sym);
-	if (istr == NULL)
-		*ps = 0;
-	else
+	char *pos;
+	if ((pos=strchr(buffer, '\n')) != NULL)
+    *pos = '\0';
+	flg = strcmp(buffer, sym);
+	if (flg == 0)
 		*ps = 1;
+	else
+		*ps = 0;
 	pthread_mutex_unlock(&shared.mutex);
 	pthread_exit((void *)ps);
 }
@@ -68,7 +71,7 @@ int main(int argc, char *argv[])
 	}
 
 	int j = 0;
-	for (int i = count - 1; i >= 0; i--) {
+	for (int i = 0; i < count; i++) {
 		result = pthread_join(threads[i], &status[i]);
 		if (result != 0) {
 			perror("Joining the first thread");
