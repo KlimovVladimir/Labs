@@ -86,6 +86,9 @@ int main(int argc, char *argv[])
 					exit(1);
 				}
 				*(shm) = *(shm) + 2;
+				printf(" Пчела[%d]: Принесла мед!\n", i);
+				printf("Кол-во мёда = %d\n",
+		       *(shm));
 				sleep(rand() % 4);
 				if ((semop(semid, &rel_res, 1)) == -1) {
 					fprintf(stderr, "Unlock failed\n");
