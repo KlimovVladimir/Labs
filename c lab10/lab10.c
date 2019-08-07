@@ -28,18 +28,17 @@ void *func(void *arg)
 	pthread_mutex_lock(&shared.mutex);
 	fgets(buffer, MAX_LEN, op);
 	char *pos;
-	if ((pos=strchr(buffer, '\n')) != NULL)
-    *pos = '\0';
+	if ((pos = strchr(buffer, '\n')) != NULL)
+		*pos = '\0';
 	flg = strcmp(buffer, sym);
-	if (flg == 0)
-	{
+	if (flg == 0) {
 		*ps = 1;
-		printf("Строка[%s] - строка найдена\n",buffer);
-	}
-	else
-	{
+		printf("Строка[%s] - строка найдена\n",
+		       buffer);
+	} else {
 		*ps = 0;
-		printf("Строка[%s] - строка не найдена\n",buffer);
+		printf("Строка[%s] - строка не найдена\n",
+		       buffer);
 	}
 	pthread_mutex_unlock(&shared.mutex);
 	pthread_exit((void *)ps);
@@ -51,7 +50,7 @@ int main(int argc, char *argv[])
 	FILE *fp;
 	int count = 0;
 	char buffer[MAX_LEN];
-	sym = (char *)malloc(sizeof(char)*MAX_LEN);
+	sym = (char *)malloc(sizeof (char) * MAX_LEN);
 	int countsovp = 0;
 
 	if (argc < 3) {
@@ -59,16 +58,15 @@ int main(int argc, char *argv[])
 			"Мало аргументов. Используйте <имя файла, заданная строка>\n");
 		exit(1);
 	}
-	for(int i = 2; i < argc; i++)
-	{
-		strcat(sym,argv[i]);
-		if(i - argc != -1)
-		strcat(sym," ");
+	for (int i = 2; i < argc; i++) {
+		strcat(sym, argv[i]);
+		if (i - argc != -1)
+			strcat(sym, " ");
 	}
 	char *pos;
-	if ((pos=strchr(sym, '\n')) != NULL)
-    *pos = '\0';
-	printf("Введеная строка: |%s|\n",sym);
+	if ((pos = strchr(sym, '\n')) != NULL)
+		*pos = '\0';
+	printf("Введеная строка: |%s|\n", sym);
 	if ((fp = fopen(argv[1], "r")) == NULL) {
 		printf("Не удается открыть файл.\n");
 		exit(1);
@@ -93,12 +91,12 @@ int main(int argc, char *argv[])
 			return EXIT_FAILURE;
 		} else {
 			if (*((int *)status[i]) == 1)
-			countsovp++;
+				countsovp++;
 		}
 		free(status[i]);
 	}
-	
-	printf("Кол-во найденных строк %d\n",countsovp);
+
+	printf("Кол-во найденных строк %d\n", countsovp);
 	if (fclose(fp)) {
 		printf("Ошибка при закрытии файла.\n");
 		exit(1);
@@ -107,4 +105,3 @@ int main(int argc, char *argv[])
 	printf("Done..\n");
 	return EXIT_SUCCESS;
 }
-
