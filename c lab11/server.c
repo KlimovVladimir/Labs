@@ -10,59 +10,57 @@
 #include <string.h>
 #include <sys/types.h>
 #include <time.h>
-#include <pthread.h> 
+#include <pthread.h>
 #define MAX_LEN 1025
-
 
 void *ThreadMain(void *threadArgs)
 {
 	char recvBuff[MAX_LEN];
 	char sendBuff[MAX_LEN];
 	FILE *fp;
-	int connfd = (*(int*) threadArgs);
-    read(connfd, recvBuff, sizeof (recvBuff) - 1);
+	int connfd = (*(int *)threadArgs);
+	read(connfd, recvBuff, sizeof (recvBuff) - 1);
 
-		char *pos;
-		if ((pos = strchr(recvBuff, '\n')) != NULL)
-			*pos = '\0';
+	char *pos;
+	if ((pos = strchr(recvBuff, '\n')) != NULL)
+		*pos = '\0';
 
-		char *token;
-		char files[MAX_LEN][MAX_LEN];
-		int count = 0;
-		token = strtok(recvBuff, " ");
-		while (token != NULL) {
-			strcpy(files[count], token);
-			count++;
-			token = strtok(NULL, " ");
-		}
+	char *token;
+	char files[MAX_LEN][MAX_LEN];
+	int count = 0;
+	token = strtok(recvBuff, " ");
+	while (token != NULL) {
+		strcpy(files[count], token);
+		count++;
+		token = strtok(NULL, " ");
+	}
 
-		for (int i = 0; i < count; i++) {
-			if ((fp = fopen(files[i], "r")) == NULL) {
+	for (int i = 0; i < count; i++) {
+		if ((fp = fopen(files[i], "r")) == NULL) {
+			printf
+			    ("Не удается открыть файл.\n");
+		} else {
+			snprintf(sendBuff, sizeof (sendBuff), "%s\n", files[i]);
+			write(connfd, sendBuff, strlen(sendBuff));
+
+			char c;
+			int summ = 0;
+			while ((c = fgetc(fp)) != EOF) {
+				summ += (int)c;
+			}
+			sprintf(sendBuff,
+				"Контрольная сумма: %d \n",
+				summ);
+			write(connfd, sendBuff, strlen(sendBuff));
+			if (fclose(fp)) {
 				printf
-				    ("Не удается открыть файл.\n");
-			} else {
-				snprintf(sendBuff, sizeof (sendBuff), "%s\n",
-					 files[i]);
-				write(connfd, sendBuff, strlen(sendBuff));
-
-				char c;
-				int summ = 0;
-				while ((c = fgetc(fp)) != EOF) {
-					summ += (int)c;
-				}
-				sprintf(sendBuff,
-					"Контрольная сумма: %d \n",
-					summ);
-				write(connfd, sendBuff, strlen(sendBuff));
-				if (fclose(fp)) {
-					printf
-					    ("Ошибка при закрытии файла.\n");
-				}
+				    ("Ошибка при закрытии файла.\n");
 			}
 		}
-		close(connfd);
+	}
+	close(connfd);
 
-    return (NULL);
+	return (NULL);
 }
 
 int main(int argc, char *argv[])
