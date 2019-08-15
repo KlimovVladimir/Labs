@@ -15,6 +15,7 @@
 
 void *ThreadMain(void *threadArgs)
 {
+	pthread_detach(pthread_self());
 	char recvBuff[MAX_LEN];
 	char sendBuff[MAX_LEN];
 	FILE *fp;
