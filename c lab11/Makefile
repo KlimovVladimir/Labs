@@ -1,5 +1,5 @@
 server: server.o client
-	gcc -Wall server.o -o server
+	gcc -Wall server.o -o server -std=c99 -lpthread
 
 server.o: server.c
 	gcc -c server.c 

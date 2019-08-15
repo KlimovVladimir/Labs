@@ -66,6 +66,6 @@ int main(int argc, char *argv[])
 	if (n < 0) {
 		printf("\n Read error \n");
 	}
-
+	close(sockfd);
 	return 0;
 }
