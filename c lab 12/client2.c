@@ -82,7 +82,7 @@ int main(int argc, char *argv[])
 			sendBuff[strlen(sendBuff)] = '\0';
 			printf("Получено сообщение <%s>\n",
 			       sendBuff);
-			sleep(1);
+			sleep(rand()%3);
 		}
 	}
 

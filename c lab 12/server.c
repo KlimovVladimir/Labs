@@ -159,10 +159,7 @@ void *ThreadMain(void *threadArgs)
 			fflush(stdout);
 			colmes++;
 			pthread_mutex_unlock(&shared.mutex);
-		} else if (MAX_MES == colmes) {
-			close(connfd);
-			return (NULL);
-		}
+		} 
 		sleep(1);
 	}
 }
@@ -187,10 +184,7 @@ void *ThreadMain2(void *threadArgs)
 			       recvBuff);
 			colmes--;
 			pthread_mutex_unlock(&shared.mutex);
-		} else if (0 == colmes) {
-			close(connfd);
-			return (NULL);
-		}
+		} 
 		sleep(1);
 	}
 }
