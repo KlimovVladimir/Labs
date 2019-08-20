@@ -92,13 +92,6 @@ void *ThreadBroad1(void *threadArgs)
 			sendto(sock, echoBuffer, strlen(echoBuffer), 0,
 			       (struct sockaddr *)&broadcastAddr,
 			       sizeof (broadcastAddr));
-		} else if (MAX_MES == colmes) {
-			strcpy(echoBuffer, "Очередь полна");
-			sendto(sock, echoBuffer, strlen(echoBuffer), 0,
-			       (struct sockaddr *)&broadcastAddr,
-			       sizeof (broadcastAddr));
-			close(sock);
-			return (NULL);
 		}
 		sleep(1);
 	}
@@ -138,13 +131,6 @@ void *ThreadBroad2(void *threadArgs)
 			sendto(sock, echoBuffer, strlen(echoBuffer), 0,
 			       (struct sockaddr *)&broadcastAddr,
 			       sizeof (broadcastAddr));
-		} else if (0 == colmes) {
-			strcpy(echoBuffer, "Очередь пуста");
-			sendto(sock, echoBuffer, strlen(echoBuffer), 0,
-			       (struct sockaddr *)&broadcastAddr,
-			       sizeof (broadcastAddr));
-			close(sock);
-			return (NULL);
 		}
 		sleep(1);
 	}

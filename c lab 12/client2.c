@@ -83,11 +83,7 @@ int main(int argc, char *argv[])
 			printf("Получено сообщение <%s>\n",
 			       sendBuff);
 			sleep(1);
-		} else if (strcmp(echoBuffer, "Очередь пуста") == 0) {
-			close(sockfd);
-			return 0;
 		}
-
 	}
 
 	close(sockfd);

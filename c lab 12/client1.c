@@ -92,10 +92,7 @@ int main(int argc, char *argv[])
 		recvStringLen =
 		    recvfrom(sockB, echoBuffer, ECHOMAX, 0, NULL, 0);
 		echoBuffer[recvStringLen] = '\0';
-		if (strcmp(echoBuffer, "Очередь полна") == 0) {
-			close(sockfd);
-			exit(0);
-		} else if (strcmp(echoBuffer, "Жду сообщений") == 0) {
+		if (strcmp(echoBuffer, "Жду сообщений") == 0) {
 			char randoms[MAX_LEN];
 			strcpy(echoBuffer, "");
 			ii = rand() % MAX_SLEEP;
