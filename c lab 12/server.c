@@ -37,6 +37,7 @@ struct ThreadArgs {
 	int listenfd;
 	int connfd;
 	int sock;
+	char *serverIP;
 	unsigned short broadcastPort;
 };
 
@@ -68,6 +69,7 @@ void *ThreadBroad1(void *threadArgs)
 
 	unsigned short broadcastPort =
 	    ((struct ThreadArgs *)threadArgs)->broadcastPort;
+	char *serverIP = ((struct ThreadArgs *)threadArgs)->serverIP;
 	pthread_detach(pthread_self());
 
 	if ((sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
@@ -81,11 +83,10 @@ void *ThreadBroad1(void *threadArgs)
 
 	memset(&broadcastAddr, 0, sizeof (broadcastAddr));
 	broadcastAddr.sin_family = AF_INET;
-	broadcastAddr.sin_addr.s_addr = htonl(INADDR_ANY);
+	broadcastAddr.sin_addr.s_addr = inet_addr(serverIP);
 	broadcastAddr.sin_port = htons(broadcastPort);
 
 	for (;;) {
-		sleep(1);
 
 		if (colmes < MAX_MES) {
 			strcpy(echoBuffer, "Жду сообщений");
@@ -93,7 +94,7 @@ void *ThreadBroad1(void *threadArgs)
 			       (struct sockaddr *)&broadcastAddr,
 			       sizeof (broadcastAddr));
 		}
-		sleep(1);
+		sleep(4);
 	}
 
 }
@@ -107,6 +108,7 @@ void *ThreadBroad2(void *threadArgs)
 
 	unsigned short broadcastPort =
 	    ((struct ThreadArgs *)threadArgs)->broadcastPort;
+	char *serverIP = ((struct ThreadArgs *)threadArgs)->serverIP;
 	pthread_detach(pthread_self());
 
 	if ((sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
@@ -120,19 +122,17 @@ void *ThreadBroad2(void *threadArgs)
 
 	memset(&broadcastAddr, 0, sizeof (broadcastAddr));
 	broadcastAddr.sin_family = AF_INET;
-	broadcastAddr.sin_addr.s_addr = htonl(INADDR_ANY);
+	broadcastAddr.sin_addr.s_addr = inet_addr(serverIP);
 	broadcastAddr.sin_port = htons(broadcastPort);
 
 	for (;;) {
-		sleep(1);
-
-		if (colmes != 0) {
+		if (colmes > 0) {
 			strcpy(echoBuffer, "Есть сообщения");
 			sendto(sock, echoBuffer, strlen(echoBuffer), 0,
 			       (struct sockaddr *)&broadcastAddr,
 			       sizeof (broadcastAddr));
 		}
-		sleep(1);
+		sleep(4);
 	}
 
 }
@@ -145,22 +145,25 @@ void *ThreadMain(void *threadArgs)
 	int qtype = 1;
 	char recvBuff[ECHOMAX];
 	pthread_detach(pthread_self());
-
+	char Buff[2];
+	int result;
 	for (;;) {
-		sleep(1);
-
-		if (colmes < MAX_MES) {
-			pthread_mutex_lock(&shared.mutex);
-			read(connfd, recvBuff, sizeof (recvBuff) - 1);
+		result = recv(connfd, Buff, sizeof (Buff), 0);
+		if (result == 0) {
+			puts("Disconnect");
+			return NULL;
+		}
+		pthread_mutex_lock(&shared.mutex);
+		if (result > 0 && strcmp(Buff, "1") == 0) {
+			recv(connfd, recvBuff, sizeof (recvBuff) - 1, 0);
 			printf("Получено сообщение <%s>\n",
 			       recvBuff);
 			send_message(msgqid, (struct mymsgbuf *)&qbuf, qtype,
 				     recvBuff);
 			fflush(stdout);
 			colmes++;
-			pthread_mutex_unlock(&shared.mutex);
-		} 
-		sleep(1);
+		}
+		pthread_mutex_unlock(&shared.mutex);
 	}
 }
 
@@ -172,20 +175,25 @@ void *ThreadMain2(void *threadArgs)
 	int qtype = 1;
 	char recvBuff[ECHOMAX];
 	pthread_detach(pthread_self());
-
+	char Buff[2];
+	int result;
 	for (;;) {
-		sleep(1);
-		if (colmes != 0) {
-			pthread_mutex_lock(&shared.mutex);
+		result = read(connfd, Buff, sizeof (Buff));
+		if (result == 0) {
+			puts("Disconnect");
+			return NULL;
+		}
+		pthread_mutex_lock(&shared.mutex);
+		if (strcmp(Buff, "2") == 0) {
 			read_message(msgqid, (struct mymsgbuf *)&qbuf, qtype,
 				     recvBuff);
+			strcat(recvBuff, "\0");
 			write(connfd, recvBuff, strlen(recvBuff));
 			printf("Сообщение <%s> отправлено\n",
 			       recvBuff);
 			colmes--;
-			pthread_mutex_unlock(&shared.mutex);
-		} 
-		sleep(1);
+		}
+		pthread_mutex_unlock(&shared.mutex);
 	}
 }
 
@@ -199,21 +207,23 @@ int main(int argc, char *argv[])
 	unsigned short echoServPort;
 	char sendBuff[ECHOMAX];
 	pthread_t threadID;
-	unsigned short broadcastPort = 1500;
+	unsigned short broadcastPort = 4000;
 	threadArgs->broadcastPort = broadcastPort;
 	key_t key;
-	if (argc != 2) {
-		fprintf(stderr, "Usage:  %s <Server Port>\n", argv[0]);
+	if (argc != 3) {
+		fprintf(stderr, "Usage:  %s <Server IP Server Port>\n",
+			argv[0]);
 		exit(1);
 	}
+	threadArgs->serverIP = argv[1];
 
-	key = ftok(".", 'm');
+	key = ftok(".", 'n');
 	if ((threadArgs->msgqid = msgget(key, IPC_CREAT | 0660)) == -1) {
 		perror("msgget");
 		exit(1);
 	}
 
-	echoServPort = atoi(argv[1]);
+	echoServPort = atoi(argv[2]);
 	threadArgs->listenfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
 	threadArgs->sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
@@ -222,7 +232,7 @@ int main(int argc, char *argv[])
 	memset(sendBuff, '0', sizeof (sendBuff));
 
 	serv_addr.sin_family = AF_INET;
-	serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+	serv_addr.sin_addr.s_addr = inet_addr(threadArgs->serverIP);
 	serv_addr.sin_port = htons(echoServPort);
 
 	bind(threadArgs->listenfd, (struct sockaddr *)&serv_addr,

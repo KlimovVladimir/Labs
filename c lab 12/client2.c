@@ -13,8 +13,8 @@
 int main(int argc, char *argv[])
 {
 	int sockfd = 0;
-	char recvBuff[ECHOMAX];
-	char sendBuff[ECHOMAX];
+	char recvBuff[ECHOMAX+1];
+	char sendBuff[ECHOMAX+1];
 	struct sockaddr_in serv_addr;
 	unsigned short echoServPort;
 	if (argc < 3) {
@@ -29,7 +29,6 @@ int main(int argc, char *argv[])
 	}
 
 	memset(&serv_addr, '0', sizeof (serv_addr));
-
 	serv_addr.sin_family = AF_INET;
 	serv_addr.sin_port = htons(echoServPort);
 
@@ -59,7 +58,7 @@ int main(int argc, char *argv[])
 
 	memset(&broadcastAddr, 0, sizeof (broadcastAddr));
 	broadcastAddr.sin_family = AF_INET;
-	broadcastAddr.sin_addr.s_addr = htonl(INADDR_ANY);
+	broadcastAddr.sin_addr.s_addr = inet_addr(argv[1]);
 	broadcastAddr.sin_port = htons(broadcastPort);
 
 	if (bind
@@ -78,11 +77,13 @@ int main(int argc, char *argv[])
 		    recvfrom(sockB, echoBuffer, ECHOMAX, 0, NULL, 0);
 		echoBuffer[recvStringLen] = '\0';
 		if (strcmp(echoBuffer, "Есть сообщения") == 0) {
-			read(sockfd, sendBuff, sizeof (sendBuff) - 1);
+			send(sockfd, Buff, strlen(Buff), 0);
+			sleep(1);
+			recv(sockfd, sendBuff, sizeof (sendBuff) - 1, 0);
 			sendBuff[strlen(sendBuff)] = '\0';
 			printf("Получено сообщение <%s>\n",
 			       sendBuff);
-			sleep(rand()%3);
+			sleep(rand() % 3);
 		}
 	}
 

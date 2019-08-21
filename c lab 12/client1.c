@@ -10,7 +10,7 @@
 #include <arpa/inet.h>
 #define ECHOMAX 255
 #define MAX_LEN 5
-#define MAX_SLEEP 5
+#define MAX_SLEEP 3
 
 void gen_random(char *s, const int len)
 {
@@ -45,6 +45,7 @@ int main(int argc, char *argv[])
 
 	serv_addr.sin_family = AF_INET;
 	serv_addr.sin_port = htons(echoServPort);
+	serv_addr.sin_addr.s_addr = inet_addr(argv[1]);
 
 	if (inet_pton(AF_INET, argv[1], &serv_addr.sin_addr) <= 0) {
 		printf("\n inet_pton error occured\n");
@@ -72,7 +73,7 @@ int main(int argc, char *argv[])
 
 	memset(&broadcastAddr, 0, sizeof (broadcastAddr));
 	broadcastAddr.sin_family = AF_INET;
-	broadcastAddr.sin_addr.s_addr = htonl(INADDR_ANY);
+	broadcastAddr.sin_addr.s_addr = inet_addr(argv[1]);
 	broadcastAddr.sin_port = htons(broadcastPort);
 
 	if (bind
@@ -93,13 +94,17 @@ int main(int argc, char *argv[])
 		    recvfrom(sockB, echoBuffer, ECHOMAX, 0, NULL, 0);
 		echoBuffer[recvStringLen] = '\0';
 		if (strcmp(echoBuffer, "Жду сообщений") == 0) {
+
+			send(sockfd, Buff, strlen(Buff), 0);
+			sleep(1);
+
 			char randoms[MAX_LEN];
 			strcpy(echoBuffer, "");
 			ii = rand() % MAX_SLEEP;
 			gen_random(randoms, len);
 			sprintf(sendBuff, "%d %d %s", ii, len, randoms);
 			strcat(sendBuff, "\0");
-			write(sockfd, sendBuff, strlen(sendBuff));
+			send(sockfd, sendBuff, strlen(sendBuff), 0);
 			printf("Сообщение <%s> отправлено\n",
 			       sendBuff);
 			sleep(ii);
