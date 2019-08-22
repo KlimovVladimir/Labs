@@ -188,11 +188,9 @@ void *ThreadMain2(void *threadArgs)
 		if (strcmp(Buff, "2") == 0) {
 			read_message(msgqid, (struct mymsgbuf *)&qbuf, qtype,
 				     recvBuff1);
-			strcpy(recvBuff,recvBuff1);
-			//strcat(recvBuff, "\0");
-			strcpy(recvBuff1,"");
+			strcpy(recvBuff, recvBuff1);
+			strcpy(recvBuff1, "");
 			write(connfd, recvBuff, strlen(recvBuff));
-			puts(recvBuff);
 			printf("Сообщение <%s> отправлено\n",
 			       recvBuff);
 			colmes--;

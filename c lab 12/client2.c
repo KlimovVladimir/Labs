@@ -13,8 +13,8 @@
 int main(int argc, char *argv[])
 {
 	int sockfd = 0;
-	char recvBuff[ECHOMAX+1];
-	char sendBuff[ECHOMAX+1];
+	char recvBuff[ECHOMAX + 1];
+	char sendBuff[ECHOMAX + 1];
 	struct sockaddr_in serv_addr;
 	unsigned short echoServPort;
 	if (argc < 3) {
@@ -86,16 +86,14 @@ int main(int argc, char *argv[])
 			token = strtok(NULL, " ");
 			int lenbuff = atoi(token);
 			token = strtok(NULL, " ");
-			char strok[ECHOMAX+1];
-			for(int i = 0; i < lenbuff; i++)
-			{
-				strok[i] = *(token+i);
+			char strok[ECHOMAX + 1];
+			for (int i = 0; i < lenbuff; i++) {
+				strok[i] = *(token + i);
 			}
 			sprintf(sendBuff, "%d %d %s", number, lenbuff, strok);
 			printf("Получено сообщение <%s>\n",
 			       sendBuff);
-			for(int i = 0; i < ECHOMAX+1; i++)
-			{
+			for (int i = 0; i < ECHOMAX + 1; i++) {
 				strok[i] = '\0';
 			}
 			sleep(rand() % 3);
