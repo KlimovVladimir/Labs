@@ -174,6 +174,7 @@ void *ThreadMain2(void *threadArgs)
 	int connfd = ((struct ThreadArgs *)threadArgs)->connfd;
 	int qtype = 1;
 	char recvBuff[ECHOMAX];
+	char recvBuff1[ECHOMAX];
 	pthread_detach(pthread_self());
 	char Buff[2];
 	int result;
@@ -186,9 +187,12 @@ void *ThreadMain2(void *threadArgs)
 		pthread_mutex_lock(&shared.mutex);
 		if (strcmp(Buff, "2") == 0) {
 			read_message(msgqid, (struct mymsgbuf *)&qbuf, qtype,
-				     recvBuff);
-			strcat(recvBuff, "\0");
+				     recvBuff1);
+			strcpy(recvBuff,recvBuff1);
+			//strcat(recvBuff, "\0");
+			strcpy(recvBuff1,"");
 			write(connfd, recvBuff, strlen(recvBuff));
+			puts(recvBuff);
 			printf("Сообщение <%s> отправлено\n",
 			       recvBuff);
 			colmes--;

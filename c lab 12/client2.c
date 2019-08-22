@@ -80,9 +80,24 @@ int main(int argc, char *argv[])
 			send(sockfd, Buff, strlen(Buff), 0);
 			sleep(1);
 			recv(sockfd, sendBuff, sizeof (sendBuff) - 1, 0);
-			sendBuff[strlen(sendBuff)] = '\0';
+			char *token;
+			token = strtok(sendBuff, " ");
+			int number = atoi(token);
+			token = strtok(NULL, " ");
+			int lenbuff = atoi(token);
+			token = strtok(NULL, " ");
+			char strok[ECHOMAX+1];
+			for(int i = 0; i < lenbuff; i++)
+			{
+				strok[i] = *(token+i);
+			}
+			sprintf(sendBuff, "%d %d %s", number, lenbuff, strok);
 			printf("Получено сообщение <%s>\n",
 			       sendBuff);
+			for(int i = 0; i < ECHOMAX+1; i++)
+			{
+				strok[i] = '\0';
+			}
 			sleep(rand() % 3);
 		}
 	}
