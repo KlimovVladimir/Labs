@@ -30,6 +30,7 @@ int main(int argc, char *argv[])
 	char sendBuff[ECHOMAX];
 	struct sockaddr_in serv_addr;
 	unsigned short echoServPort;
+	srand(getpid());
 	if (argc < 3) {
 		fprintf(stderr, "Usage: %s <Server IP> <Port>\n", argv[0]);
 		exit(1);
@@ -47,70 +48,88 @@ int main(int argc, char *argv[])
 	serv_addr.sin_port = htons(echoServPort);
 	serv_addr.sin_addr.s_addr = inet_addr(argv[1]);
 
-	if (inet_pton(AF_INET, argv[1], &serv_addr.sin_addr) <= 0) {
-		printf("\n inet_pton error occured\n");
-		return 1;
-	}
-
-	if (connect(sockfd, (struct sockaddr *)&serv_addr, sizeof (serv_addr)) <
-	    0) {
-		printf("\n Error : Connect Failed \n");
-		return 1;
-	}
-
-	char echoBuffer[ECHOMAX + 1];
-	char Bufferer[100];
-	read(sockfd, Bufferer, sizeof (Bufferer) - 1);
-	Bufferer[strlen(Bufferer)] = '\0';
-
-	int sockB;
-	struct sockaddr_in broadcastAddr;
-	unsigned short broadcastPort = atoi(Bufferer);
-	int recvStringLen;
-
-	if ((sockB = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
-		perror("socket() failed");
-
-	memset(&broadcastAddr, 0, sizeof (broadcastAddr));
-	broadcastAddr.sin_family = AF_INET;
-	broadcastAddr.sin_addr.s_addr = inet_addr(argv[1]);
-	broadcastAddr.sin_port = htons(broadcastPort);
-
-	if (bind
-	    (sockB, (struct sockaddr *)&broadcastAddr,
-	     sizeof (broadcastAddr)) < 0) {
-		perror("bind() failed");
-	}
-
-	char Buff[2];
-	strcpy(Buff, "1");
-	write(sockfd, Buff, strlen(Buff));
-
-	int ii = 0;
-	srand(getpid());
-	int len = rand() % MAX_LEN + 1;
 	for (;;) {
-		recvStringLen =
-		    recvfrom(sockB, echoBuffer, ECHOMAX, 0, NULL, 0);
-		echoBuffer[recvStringLen] = '\0';
-		if (strcmp(echoBuffer, "Жду сообщений") == 0) {
+		sleep(1);
+		sockfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+		if (inet_pton(AF_INET, argv[1], &serv_addr.sin_addr) <= 0) {
+			printf("\n inet_pton error occured\n");
+			return 1;
+		}
+		if (connect
+		    (sockfd, (struct sockaddr *)&serv_addr,
+		     sizeof (serv_addr)) < 0) {
+			printf("\n Error : Connect Failed \n");
+		} else {
+			puts("Connected");
 
-			send(sockfd, Buff, strlen(Buff), 0);
-			sleep(1);
+			char echoBuffer[ECHOMAX + 1];
+			char Bufferer[100];
+			read(sockfd, Bufferer, sizeof (Bufferer) - 1);
+			Bufferer[strlen(Bufferer)] = '\0';
 
-			char randoms[MAX_LEN];
-			strcpy(echoBuffer, "");
-			ii = rand() % MAX_SLEEP;
-			gen_random(randoms, len);
-			sprintf(sendBuff, "%d %d %s", ii, len, randoms);
-			strcat(sendBuff, "\0");
-			send(sockfd, sendBuff, strlen(sendBuff), 0);
-			printf("Сообщение <%s> отправлено\n",
-			       sendBuff);
-			sleep(ii);
+			int sockB;
+			struct sockaddr_in broadcastAddr;
+			unsigned short broadcastPort = atoi(Bufferer);
+			int recvStringLen;
+
+			if ((sockB =
+			     socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
+				perror("socket() failed");
+
+			memset(&broadcastAddr, 0, sizeof (broadcastAddr));
+			broadcastAddr.sin_family = AF_INET;
+			broadcastAddr.sin_addr.s_addr = inet_addr(argv[1]);
+			broadcastAddr.sin_port = htons(broadcastPort);
+
+			if (bind
+			    (sockB, (struct sockaddr *)&broadcastAddr,
+			     sizeof (broadcastAddr)) < 0) {
+				perror("bind() failed");
+			}
+
+			char Buff[2];
+			strcpy(Buff, "1");
+			write(sockfd, Buff, strlen(Buff));
+
+			int ii = 0;
+			int len = rand() % MAX_LEN + 1;
+			int conntry = 3;
+			for (;;) {
+				recvStringLen =
+				    recvfrom(sockB, echoBuffer, ECHOMAX, 0,
+					     NULL, 0);
+				echoBuffer[recvStringLen] = '\0';
+				if (strcmp
+				    (echoBuffer,
+				     "Жду сообщений") == 0) {
+
+					send(sockfd, Buff, strlen(Buff), 0);
+					sleep(1);
+
+					char randoms[MAX_LEN];
+					strcpy(echoBuffer, "");
+					ii = rand() % MAX_SLEEP;
+					gen_random(randoms, len);
+					sprintf(sendBuff, "%d %d %s", ii, len,
+						randoms);
+					strcat(sendBuff, "\0");
+					send(sockfd, sendBuff, strlen(sendBuff),
+					     0);
+					printf
+					    ("Сообщение <%s> отправлено\n",
+					     sendBuff);
+					sleep(ii);
+					break;
+				}
+				conntry--;
+				puts("Wait Server");
+				sleep(1);
+				if (conntry < 0)
+					break;
+			}
+			close(sockfd);
+			close(sockB);
 		}
 	}
-
-	close(sockfd);
 	return 0;
 }

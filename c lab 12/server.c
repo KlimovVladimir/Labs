@@ -96,6 +96,7 @@ void *ThreadBroad1(void *threadArgs)
 		}
 		sleep(4);
 	}
+	return NULL;
 
 }
 
@@ -134,6 +135,7 @@ void *ThreadBroad2(void *threadArgs)
 		}
 		sleep(4);
 	}
+	return NULL;
 
 }
 
@@ -150,11 +152,10 @@ void *ThreadMain(void *threadArgs)
 	for (;;) {
 		result = recv(connfd, Buff, sizeof (Buff), 0);
 		if (result == 0) {
-			puts("Disconnect");
 			return NULL;
 		}
-		pthread_mutex_lock(&shared.mutex);
 		if (result > 0 && strcmp(Buff, "1") == 0) {
+			pthread_mutex_lock(&shared.mutex);
 			recv(connfd, recvBuff, sizeof (recvBuff) - 1, 0);
 			printf("Получено сообщение <%s>\n",
 			       recvBuff);
@@ -162,8 +163,9 @@ void *ThreadMain(void *threadArgs)
 				     recvBuff);
 			fflush(stdout);
 			colmes++;
+			pthread_mutex_unlock(&shared.mutex);
+			return NULL;
 		}
-		pthread_mutex_unlock(&shared.mutex);
 	}
 }
 
@@ -181,7 +183,6 @@ void *ThreadMain2(void *threadArgs)
 	for (;;) {
 		result = read(connfd, Buff, sizeof (Buff));
 		if (result == 0) {
-			puts("Disconnect");
 			return NULL;
 		}
 		pthread_mutex_lock(&shared.mutex);
@@ -209,7 +210,7 @@ int main(int argc, char *argv[])
 	unsigned short echoServPort;
 	char sendBuff[ECHOMAX];
 	pthread_t threadID;
-	unsigned short broadcastPort = 4000;
+	unsigned short broadcastPort = 8000;
 	threadArgs->broadcastPort = broadcastPort;
 	key_t key;
 	if (argc != 3) {
@@ -219,7 +220,7 @@ int main(int argc, char *argv[])
 	}
 	threadArgs->serverIP = argv[1];
 
-	key = ftok(".", 'n');
+	key = ftok(".", 'm');
 	if ((threadArgs->msgqid = msgget(key, IPC_CREAT | 0660)) == -1) {
 		perror("msgget");
 		exit(1);
@@ -243,12 +244,13 @@ int main(int argc, char *argv[])
 	listen(threadArgs->listenfd, 10);
 
 	while (1) {
+		if (broadcastPort >= 15000)
+			broadcastPort = 8000;
 		threadArgs->connfd =
 		    accept(threadArgs->listenfd, (struct sockaddr *)NULL, NULL);
 
 		char Buff[100];
 		sprintf(Buff, "%d", broadcastPort);
-		puts("Connected");
 		write(threadArgs->connfd, Buff, strlen(Buff));
 
 		if (pthread_create
