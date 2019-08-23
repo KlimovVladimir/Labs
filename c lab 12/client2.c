@@ -81,6 +81,9 @@ int main(int argc, char *argv[])
 				recvStringLen =
 				    recvfrom(sockB, echoBuffer, ECHOMAX, 0,
 					     NULL, 0);
+				if (recvStringLen == 0) {
+					break;
+				}
 				echoBuffer[recvStringLen] = '\0';
 				if (strcmp
 				    (echoBuffer,
