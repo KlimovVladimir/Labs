@@ -15,7 +15,7 @@
 #define MAX_LEN 1025
 #define	MAXNITEMS 1000000
 #define ECHOMAX 255
-#define MAX_MES 5
+#define MAX_MES 10
 int colmes = 0;
 
 struct mymsgbuf {
@@ -63,13 +63,12 @@ void read_message(int qid, struct mymsgbuf *qbuf, long type, char *msg)
 void *ThreadBroad1(void *threadArgs)
 {
 	int sock;
-	struct sockaddr_in broadcastAddr;
+	struct sockaddr_in broadcastAddr[102];
 	char echoBuffer[ECHOMAX];
 	int broadcastPermission;
 
 	unsigned short broadcastPort =
 	    ((struct ThreadArgs *)threadArgs)->broadcastPort;
-	char *serverIP = ((struct ThreadArgs *)threadArgs)->serverIP;
 	pthread_detach(pthread_self());
 
 	if ((sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
@@ -81,57 +80,28 @@ void *ThreadBroad1(void *threadArgs)
 	     sizeof (broadcastPermission)) < 0)
 		perror("setsockopt() failed");
 
-	memset(&broadcastAddr, 0, sizeof (broadcastAddr));
-	broadcastAddr.sin_family = AF_INET;
-	broadcastAddr.sin_addr.s_addr = inet_addr(serverIP);
-	broadcastAddr.sin_port = htons(broadcastPort);
-
-	for (;;) {
-
-		if (colmes < MAX_MES) {
-			strcpy(echoBuffer, "Жду сообщений");
-			sendto(sock, echoBuffer, strlen(echoBuffer), 0,
-			       (struct sockaddr *)&broadcastAddr,
-			       sizeof (broadcastAddr));
-		}
-		sleep(4);
+	for (int i = 0; i < 100; i++) {
+		memset(&broadcastAddr[i], 0, sizeof (broadcastAddr[i]));
+		broadcastAddr[i].sin_family = AF_INET;
+		broadcastAddr[i].sin_addr.s_addr = INADDR_BROADCAST;
+		broadcastAddr[i].sin_port = htons(broadcastPort + i);
 	}
-	return NULL;
-
-}
-
-void *ThreadBroad2(void *threadArgs)
-{
-	int sock;
-	struct sockaddr_in broadcastAddr;
-	char echoBuffer[ECHOMAX];
-	int broadcastPermission;
-
-	unsigned short broadcastPort =
-	    ((struct ThreadArgs *)threadArgs)->broadcastPort;
-	char *serverIP = ((struct ThreadArgs *)threadArgs)->serverIP;
-	pthread_detach(pthread_self());
-
-	if ((sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
-		perror("socket() failed");
-
-	broadcastPermission = 1;
-	if (setsockopt
-	    (sock, SOL_SOCKET, SO_BROADCAST, (void *)&broadcastPermission,
-	     sizeof (broadcastPermission)) < 0)
-		perror("setsockopt() failed");
-
-	memset(&broadcastAddr, 0, sizeof (broadcastAddr));
-	broadcastAddr.sin_family = AF_INET;
-	broadcastAddr.sin_addr.s_addr = inet_addr(serverIP);
-	broadcastAddr.sin_port = htons(broadcastPort);
-
 	for (;;) {
-		if (colmes > 0) {
-			strcpy(echoBuffer, "Есть сообщения");
-			sendto(sock, echoBuffer, strlen(echoBuffer), 0,
-			       (struct sockaddr *)&broadcastAddr,
-			       sizeof (broadcastAddr));
+
+		for (int i = 0; i < 100; i++) {
+			if (colmes < MAX_MES) {
+				strcpy(echoBuffer, "Жду сообщений");
+				sendto(sock, echoBuffer, strlen(echoBuffer), 0,
+				       (struct sockaddr *)&broadcastAddr[i],
+				       sizeof (broadcastAddr[i]));
+			}
+			if (colmes > 0) {
+				strcpy(echoBuffer,
+				       "Есть сообщения");
+				sendto(sock, echoBuffer, strlen(echoBuffer), 0,
+				       (struct sockaddr *)&broadcastAddr[i],
+				       sizeof (broadcastAddr[i]));
+			}
 		}
 		sleep(4);
 	}
@@ -154,8 +124,8 @@ void *ThreadMain(void *threadArgs)
 		if (result == 0) {
 			return NULL;
 		}
+		pthread_mutex_lock(&shared.mutex);
 		if (result > 0 && strcmp(Buff, "1") == 0) {
-			pthread_mutex_lock(&shared.mutex);
 			recv(connfd, recvBuff, sizeof (recvBuff) - 1, 0);
 			printf("Получено сообщение <%s>\n",
 			       recvBuff);
@@ -163,9 +133,8 @@ void *ThreadMain(void *threadArgs)
 				     recvBuff);
 			fflush(stdout);
 			colmes++;
-			pthread_mutex_unlock(&shared.mutex);
-			return NULL;
 		}
+		pthread_mutex_unlock(&shared.mutex);
 	}
 }
 
@@ -186,7 +155,7 @@ void *ThreadMain2(void *threadArgs)
 			return NULL;
 		}
 		pthread_mutex_lock(&shared.mutex);
-		if (strcmp(Buff, "2") == 0) {
+		if (result > 0 && strcmp(Buff, "2") == 0) {
 			read_message(msgqid, (struct mymsgbuf *)&qbuf, qtype,
 				     recvBuff1);
 			strcpy(recvBuff, recvBuff1);
@@ -242,34 +211,24 @@ int main(int argc, char *argv[])
 	     sizeof (serv_addr));
 
 	listen(threadArgs->listenfd, 10);
+	char Buff[100];
+	sprintf(Buff, "%d", broadcastPort);
+	threadArgs->broadcastPort = broadcastPort;
+	if (pthread_create
+	    (&threadID, NULL, ThreadBroad1, (void *)threadArgs) != 0) {
+		perror("Creating thread");
+		return EXIT_FAILURE;
+	}
 
 	while (1) {
-		if (broadcastPort >= 15000)
-			broadcastPort = 8000;
 		threadArgs->connfd =
 		    accept(threadArgs->listenfd, (struct sockaddr *)NULL, NULL);
-
 		char Buff[100];
 		sprintf(Buff, "%d", broadcastPort);
 		write(threadArgs->connfd, Buff, strlen(Buff));
-
-		if (pthread_create
-		    (&threadID, NULL, ThreadBroad1, (void *)threadArgs) != 0) {
-			perror("Creating thread");
-			return EXIT_FAILURE;
-		}
-
-		if (pthread_create
-		    (&threadID, NULL, ThreadBroad2, (void *)threadArgs) != 0) {
-			perror("Creating thread");
-			return EXIT_FAILURE;
-		}
-
+		broadcastPort++;
 		char recvBuff[2];
 		read(threadArgs->connfd, recvBuff, sizeof (recvBuff) - 1);
-
-		broadcastPort++;
-		threadArgs->broadcastPort = broadcastPort;
 
 		if (strcmp(recvBuff, "1") == 0) {
 			if (pthread_create

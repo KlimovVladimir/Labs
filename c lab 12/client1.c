@@ -10,7 +10,7 @@
 #include <arpa/inet.h>
 #define ECHOMAX 255
 #define MAX_LEN 5
-#define MAX_SLEEP 3
+#define MAX_SLEEP 6
 
 void gen_random(char *s, const int len)
 {
@@ -37,6 +37,7 @@ int main(int argc, char *argv[])
 	}
 	echoServPort = atoi(argv[2]);
 	memset(recvBuff, '0', sizeof (recvBuff));
+
 	if ((sockfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
 		printf("\n Error : Could not create socket \n");
 		return 1;
@@ -53,7 +54,6 @@ int main(int argc, char *argv[])
 		sockfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 		if (inet_pton(AF_INET, argv[1], &serv_addr.sin_addr) <= 0) {
 			printf("\n inet_pton error occured\n");
-			return 1;
 		}
 		if (connect
 		    (sockfd, (struct sockaddr *)&serv_addr,
@@ -78,7 +78,7 @@ int main(int argc, char *argv[])
 
 			memset(&broadcastAddr, 0, sizeof (broadcastAddr));
 			broadcastAddr.sin_family = AF_INET;
-			broadcastAddr.sin_addr.s_addr = inet_addr(argv[1]);
+			broadcastAddr.sin_addr.s_addr = INADDR_BROADCAST;
 			broadcastAddr.sin_port = htons(broadcastPort);
 
 			if (bind
@@ -86,7 +86,6 @@ int main(int argc, char *argv[])
 			     sizeof (broadcastAddr)) < 0) {
 				perror("bind() failed");
 			}
-
 			char Buff[2];
 			strcpy(Buff, "1");
 			write(sockfd, Buff, strlen(Buff));
@@ -122,7 +121,6 @@ int main(int argc, char *argv[])
 					    ("Сообщение <%s> отправлено\n",
 					     sendBuff);
 					sleep(ii);
-					break;
 				}
 				conntry--;
 				puts("Wait Server");
@@ -134,5 +132,6 @@ int main(int argc, char *argv[])
 			close(sockB);
 		}
 	}
+
 	return 0;
 }
