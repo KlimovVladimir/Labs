@@ -9,28 +9,29 @@
 #include <errno.h>
 #include <arpa/inet.h>
 #define ECHOMAX 255
+#define MAX_LEN 5
+#define MAX_SLEEP 6
 
 int main(int argc, char *argv[])
 {
 	int sockfd = 0;
-	char recvBuff[ECHOMAX + 1];
-	char sendBuff[ECHOMAX + 1];
-	srand(getpid());
+	char recvBuff[ECHOMAX];
+	char sendBuff[ECHOMAX];
 	struct sockaddr_in serv_addr;
 	unsigned short echoServPort;
+	srand(getpid());
 	if (argc < 3) {
 		fprintf(stderr, "Usage: %s <Server IP> <Port>\n", argv[0]);
 		exit(1);
 	}
 	echoServPort = atoi(argv[2]);
 	memset(recvBuff, '0', sizeof (recvBuff));
-	if ((sockfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
-		printf("\n Error : Could not create socket \n");
-	}
 
 	memset(&serv_addr, '0', sizeof (serv_addr));
+
 	serv_addr.sin_family = AF_INET;
 	serv_addr.sin_port = htons(echoServPort);
+	serv_addr.sin_addr.s_addr = inet_addr(argv[1]);
 
 	for (;;) {
 		sleep(1);
@@ -38,15 +39,14 @@ int main(int argc, char *argv[])
 		if (inet_pton(AF_INET, argv[1], &serv_addr.sin_addr) <= 0) {
 			printf("\n inet_pton error occured\n");
 		}
-
 		if (connect
 		    (sockfd, (struct sockaddr *)&serv_addr,
 		     sizeof (serv_addr)) < 0) {
 			printf("\n Error : Connect Failed \n");
 		} else {
 			puts("Connected");
-			char echoBuffer[ECHOMAX + 1];
 
+			char echoBuffer[ECHOMAX + 1];
 			char Bufferer[100];
 			read(sockfd, Bufferer, sizeof (Bufferer) - 1);
 			Bufferer[strlen(Bufferer)] = '\0';
@@ -70,10 +70,8 @@ int main(int argc, char *argv[])
 			     sizeof (broadcastAddr)) < 0) {
 				perror("bind() failed");
 			}
-			char Buff[2];
-			strcpy(Buff, "2");
-			write(sockfd, Buff, strlen(Buff));
-			int conntry = 3;
+
+			int conntry = 1;
 			for (;;) {
 				recvStringLen =
 				    recvfrom(sockB, echoBuffer, ECHOMAX, 0,
@@ -85,10 +83,17 @@ int main(int argc, char *argv[])
 				if (strcmp
 				    (echoBuffer,
 				     "Есть сообщения") == 0) {
-					send(sockfd, Buff, strlen(Buff), 0);
-					sleep(1);
-					recv(sockfd, sendBuff,
-					     sizeof (sendBuff) - 1, 0);
+
+					char Buff[2];
+					strcpy(Buff, "2");
+					write(sockfd, Buff, strlen(Buff));
+
+					int result;
+					result = recv(sockfd, sendBuff,
+						      sizeof (sendBuff) - 1, 0);
+					if (result == 0) {
+						break;
+					}
 					char *token;
 					token = strtok(sendBuff, " ");
 					int number = atoi(token);
@@ -108,12 +113,19 @@ int main(int argc, char *argv[])
 						strok[i] = '\0';
 					}
 					sleep(number);
-				} else
+
+					break;
+				} else {
 					puts("Wait Server");
+					conntry--;
+					if (conntry < 0)
+						break;
+				}
 			}
 			close(sockfd);
 			close(sockB);
 		}
 	}
+
 	return 0;
 }

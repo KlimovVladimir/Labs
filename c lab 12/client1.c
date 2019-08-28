@@ -38,11 +38,6 @@ int main(int argc, char *argv[])
 	echoServPort = atoi(argv[2]);
 	memset(recvBuff, '0', sizeof (recvBuff));
 
-	if ((sockfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
-		printf("\n Error : Could not create socket \n");
-		return 1;
-	}
-
 	memset(&serv_addr, '0', sizeof (serv_addr));
 
 	serv_addr.sin_family = AF_INET;
@@ -86,13 +81,10 @@ int main(int argc, char *argv[])
 			     sizeof (broadcastAddr)) < 0) {
 				perror("bind() failed");
 			}
-			char Buff[2];
-			strcpy(Buff, "1");
-			write(sockfd, Buff, strlen(Buff));
 
 			int ii = 0;
 			int len = rand() % MAX_LEN + 1;
-			int conntry = 3;
+			int conntry = 1;
 			for (;;) {
 				recvStringLen =
 				    recvfrom(sockB, echoBuffer, ECHOMAX, 0,
@@ -105,9 +97,13 @@ int main(int argc, char *argv[])
 				    (echoBuffer,
 				     "Жду сообщений") == 0) {
 
-					send(sockfd, Buff, strlen(Buff), 0);
-					sleep(1);
+					char Buff[2];
+					strcpy(Buff, "1");
+					write(sockfd, Buff, strlen(Buff));
 
+					//send(sockfd, Buff, strlen(Buff), 0);
+					//sleep(1);
+					sleep(1);
 					char randoms[MAX_LEN];
 					strcpy(echoBuffer, "");
 					ii = rand() % MAX_SLEEP;
@@ -121,12 +117,13 @@ int main(int argc, char *argv[])
 					    ("Сообщение <%s> отправлено\n",
 					     sendBuff);
 					sleep(ii);
-				}
-				conntry--;
-				puts("Wait Server");
-				sleep(1);
-				if (conntry < 0)
 					break;
+				} else {
+					puts("Wait Server");
+					conntry--;
+					if (conntry < 0)
+						break;
+				}
 			}
 			close(sockfd);
 			close(sockB);
