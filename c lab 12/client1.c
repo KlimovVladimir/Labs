@@ -100,9 +100,6 @@ int main(int argc, char *argv[])
 					char Buff[2];
 					strcpy(Buff, "1");
 					write(sockfd, Buff, strlen(Buff));
-
-					//send(sockfd, Buff, strlen(Buff), 0);
-					//sleep(1);
 					sleep(1);
 					char randoms[MAX_LEN];
 					strcpy(echoBuffer, "");

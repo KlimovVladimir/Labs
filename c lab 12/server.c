@@ -196,7 +196,6 @@ int main(int argc, char *argv[])
 	if (pthread_create
 	    (&threadID, NULL, ThreadBroad1, (void *)threadArgs) != 0) {
 		perror("Creating thread");
-		return EXIT_FAILURE;
 	}
 
 	while (1) {
@@ -219,7 +218,6 @@ int main(int argc, char *argv[])
 			    (&threadID, NULL, ThreadMain,
 			     (void *)threadArgs) != 0) {
 				perror("Creating thread");
-				return EXIT_FAILURE;
 			}
 		}
 		if (strcmp(recvBuff, "2") == 0) {
@@ -227,7 +225,6 @@ int main(int argc, char *argv[])
 			    (&threadID, NULL, ThreadMain2,
 			     (void *)threadArgs) != 0) {
 				perror("Creating thread");
-				return EXIT_FAILURE;
 			}
 		}
 		int result;
