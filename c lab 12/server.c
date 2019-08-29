@@ -49,7 +49,6 @@ void send_message(int qid, struct mymsgbuf *qbuf, long type, char *text)
 	if ((msgsnd(qid, (struct msgbuf *)qbuf,
 		    strlen(qbuf->mtext) + 1, 0)) == -1) {
 		perror("msgsnd");
-		exit(1);
 	}
 }
 
